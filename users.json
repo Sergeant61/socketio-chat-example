@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "oJkzADMTGcJ2chHoG5",
+    "identity": "recep@bordo.io",
+    "identityType": "email",
+    "type": "whatsgoo-user",
+    "profile": {
+      "firstname": "Recep",
+      "lastname": "Özen"
+    },
+    "createdAt": "2022-10-03T11:58:53.332Z",
+    "updatedAt": "2022-10-10T06:25:20.893Z"
+  },
+  {
+    "_id": "oJkzADMTGcJ2chHoG4",
+    "identity": "nuh@bordo.io",
+    "identityType": "email",
+    "type": "whatsgoo-user",
+    "profile": {
+      "firstname": "Nuh",
+      "lastname": "Şentürk"
+    },
+    "createdAt": "2022-10-03T11:58:53.332Z",
+    "updatedAt": "2022-10-10T06:25:20.893Z"
+  },
+  {
+    "_id": "oJkzADMTGcJ2chHoG3",
+    "identity": "abdullah@bordo.io",
+    "identityType": "email",
+    "type": "whatsgoo-user",
+    "profile": {
+      "firstname": "Abdullah",
+      "lastname": "Dağlı"
+    },
+    "createdAt": "2022-10-03T11:58:53.332Z",
+    "updatedAt": "2022-10-10T06:25:20.893Z"
+  },
+  {
+    "_id": "oJkzADMTGcJ2chHoG2",
+    "identity": "metin@bordo.io",
+    "identityType": "email",
+    "type": "whatsgoo-user",
+    "profile": {
+      "firstname": "Metin",
+      "lastname": "Bekar"
+    },
+    "createdAt": "2022-10-03T11:58:53.332Z",
+    "updatedAt": "2022-10-10T06:25:20.893Z"
+  },
+  {
+    "_id": "oJkzADMTGcJ2chHoG1",
+    "identity": "osman@bordo.io",
+    "identityType": "email",
+    "type": "whatsgoo-user",
+    "profile": {
+      "firstname": "Osman",
+      "lastname": "Saral"
+    },
+    "createdAt": "2022-10-03T11:58:53.332Z",
+    "updatedAt": "2022-10-10T06:25:20.893Z"
+  }
+]
