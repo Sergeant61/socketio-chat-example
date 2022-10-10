@@ -23,16 +23,24 @@ const http = _http.Server(app);
 const io = socket(http);
 
 app.get('/', function (req, res) {
-  res.send('index.html');
+  res.sendfile('index.html');
 });
 
+const sessionIds = [];
+
 io.on('connection', function (socket) {
-  socket.on('join', function () {
-    const id = randomId();
+  socket.on('join', function (sessionId) {
+    let id = randomId();
+
+    if (sessionIds.includes(sessionId)) {
+      id = sessionId;
+    } else {
+      sessionIds.push(id);
+    }
 
     socket.join(id, async () => {
       socket.on('send-message', (message) => {
-        io.to(id).emit('messages', [{ type: 'text', ...message }]);
+        io.to(id).emit('messages', [{ ...generateMessages(1), ...{ type: 'text', ...message } }]);
       });
 
       io.to(id).emit('messages', generateMessages(id, 20));
@@ -42,6 +50,8 @@ io.on('connection', function (socket) {
         io.to(id).emit('messages', generateMessages(id, 1));
       }
     });
+
+    io.emit('rooms', sessionIds);
   });
 });
 
@@ -55,7 +65,6 @@ const generateMessages = (sessionId, len = 1) => {
 
   for (let i = 0; i < len; i++) {
     const type = types[getRandomInt(0, 1)];
-
     const user = users[getRandomInt(0, users.length)];
 
     messages.push({

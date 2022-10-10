@@ -61,21 +61,18 @@
     <input id="m" autocomplete="off" /><button>Send</button>
   </form>
   <script src="/socket.io/socket.io.js"></script>
-  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
   <script>
     const socket = io();
     socket.emit('join');
 
     socket.on('messages', function (messages) {
-      console.log(messages);
-
       messages.forEach(message => {
+        // console.log(message);
 
         if (message.type == 'text') {
           $('#messages').append($('<li>').text(message.payload.text));
         } else {
-
-          console.log(message);
           const image = document.createElement('img');
           image.src = message.payload.fileUrl;
           image.style.display = 'block';
@@ -84,8 +81,11 @@
 
           $('#messages').append(image);
         }
-
       });
+    });
+
+    socket.on('rooms', function (sessionIds) {
+      console.log(sessionIds);
     });
 
     $('form').submit(function () {
