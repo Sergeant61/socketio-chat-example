@@ -15,11 +15,74 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta2/css/all.min.css">
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
   <script src="./socket.io.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <title>Wepora Snippets</title>
+
+  <style>
+    .brd-card {
+      width: 70%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border-radius: 0.5rem;
+      box-shadow: 0 1rem 3rem rgba(0, 0, 0, .175);
+      gap: 0.5rem;
+    }
+
+    .brd-avatar {
+      width: 40px;
+    }
+  </style>
 </head>
 
-<body>
+<body class="vh-100">
   <!--content start-->
+
+  <div class="container-fluid bg-light h-100">
+
+    <div id="container" class="d-flex flex-column gap-4 w-100 p-2">
+
+      <span class="align-self-center shadow-lg rounded-3 p-2">
+        2022-10-18T14:34:41.313Z
+      </span>
+
+      <div class="d-flex gap-2">
+        <div class="brd-avatar">
+          <i class="fas fa-user-circle fa-2x"></i>
+        </div>
+
+        <div class="brd-card gap-2 p-2">
+          <span>Recep Özen</span>
+          <span>Lorem ipsum dolor sit amet consectetur adipisicing elit. Corrupti, natus error non qui voluptatum autem facilis delectus saepe perspiciatis a eligendi quod? Laudantium minus repellat at maiores velit maxime animi?</span>
+          <img src="" width="200px" height="200px" style="object-fit: cover;">
+          <div class="d-flex justify-content-end">
+            <span class="small fst-italic fw-bold text-black-50">2022-10-18T14:34:41.313Z</span>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="d-flex gap-2">
+        <div class="brd-avatar">
+          <!-- <i class="fas fa-user-circle fa-2x"></i> -->
+        </div>
+
+        <div class="brd-card gap-2 p-2">
+          <!-- <span>Recep Özen</span> -->
+          <span>Lorem ipsum dolor sit amet consectetur adipisicing elit. Corrupti, natus error non qui voluptatum autem facilis delectus saepe perspiciatis a eligendi quod? Laudantium minus repellat at maiores velit maxime animi?</span>
+          <div class="d-flex justify-content-end">
+            <span class="small fst-italic fw-bold text-black-50">2022-10-18T14:34:41.313Z</span>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+
+
+
+  </div>
 
   <script type="module">
     const MyUtil = {
@@ -96,59 +159,100 @@
             }],
           };
           MyUtil.addNewDayObject(obj);
-          console.log("added new day object", messageDay);
         } else {
-          console.log("day exist --->", messageDay);
           MyUtil.addMessageToDay(dayIndex, message);
         }
-        console.log(MyUtil.finalArray);
       },
       addMessageToDay: function (dayIndex, message) {
         let isMessageGroupExist = false;
+        let isSameUser = false;
 
-        let _index = MyUtil.finalArray[dayIndex].messageGroups.findIndex((messageGroup) => {
+        let groupIndex = MyUtil.finalArray[dayIndex].messageGroups.findIndex((messageGroup) => {
+          isSameUser = messageGroup.user._id === message.user._id;
+
           if (new Date(message.createdAt) > new Date(messageGroup.startAt) && new Date(message.createdAt) < new Date(messageGroup.endAt)) {
-            console.log("message group exist ----> message", message);
-            console.log("message group exist ----> messageGroup", messageGroup);
             isMessageGroupExist = true;
-            return true;
-          }
-
-          if (new Date(message.createdAt) < new Date(messageGroup.startAt)) {
-            // console.log("message group exist ----> message", message);
-            // console.log("message group exist ----> messageGroup", messageGroup);
             return true;
           }
         });
 
         if (isMessageGroupExist) {
-          console.log("addMessageToExistGroup");
-          // MyUtil.addMessageToExistGroup(dayIndex, _index, message);
+          MyUtil.addMessageToExistGroup(dayIndex, groupIndex, message, isSameUser);
         } else {
+          MyUtil.addMessageNewGroup(dayIndex, message);
+        }
+      },
+      addMessageToExistGroup: function (dayIndex, groupIndex, message, isSameUser) {
+        const messagesIndex = MyUtil.finalArray[dayIndex].messageGroups[groupIndex].messages.findIndex((_message) => new Date(_message.createdAt) > new Date(message.createdAt));
+
+        if (isSameUser) {
+          MyUtil.finalArray[dayIndex].messageGroups[groupIndex].messages.splice(messagesIndex, 0, message);
+          return;
+        }
+
+        const restMessages = MyUtil.finalArray[dayIndex].messageGroups[groupIndex].messages.splice(messagesIndex);
+        const messageGroup = MyUtil.finalArray[dayIndex].messageGroups[groupIndex];
+        MyUtil.finalArray[dayIndex].messageGroups[groupIndex].endAt = messageGroup.messages[messageGroup.messages.length - 1].createdAt;
+
+        const newMessageGroup = {
+          startAt: message.createdAt,
+          endAt: message.createdAt,
+          messages: [message],
+          user: message.user
+        };
+
+        const restMessageGroup = {
+          startAt: restMessages[0].createdAt,
+          endAt: restMessages[restMessages.length - 1].createdAt,
+          messages: restMessages,
+          user: messageGroup.user,
+        };
+
+        MyUtil.finalArray[dayIndex].messageGroups.splice(groupIndex + 1, 0, newMessageGroup, restMessageGroup);
+      },
+      addMessageNewGroup: function (dayIndex, message) {
+        const messageGroupLastIndex = MyUtil.finalArray[dayIndex].messageGroups.length - 1;
+        const startMessageGroup = MyUtil.finalArray[dayIndex].messageGroups[0];
+        const endMessageGroup = MyUtil.finalArray[dayIndex].messageGroups[messageGroupLastIndex];
+
+        const newMessageGroup = {
+          startAt: message.createdAt,
+          endAt: message.createdAt,
+          messages: [message],
+          user: message.user
+        };
+
+        if (new Date(message.createdAt) < new Date(startMessageGroup.startAt)) {
+          const isSameUser = message.user._id === startMessageGroup.user._id;
+
+          if (isSameUser) {
+            const messagesIndex = startMessageGroup.messages.findIndex((_message) => new Date(_message.createdAt) > new Date(message.createdAt));
+            MyUtil.finalArray[dayIndex].messageGroups[0].messages.splice(messagesIndex, 0, message);
+            return;
+          }
+
+          MyUtil.finalArray[dayIndex].messageGroups.unshift(newMessageGroup);
+          return;
+        } else {
+          console.log("startMessageGroup end");
+        }
+
+        if (new Date(message.createdAt) > new Date(endMessageGroup.endAt)) {
+          const isSameUser = message.user._id === endMessageGroup.user._id;
+
+          if (isSameUser) {
+            const messagesIndex = endMessageGroup.messages.findIndex((_message) => new Date(_message.createdAt) > new Date(message.createdAt));
+            MyUtil.finalArray[dayIndex].messageGroups[messageGroupLastIndex].messages.splice(messagesIndex, 0, message);
+            return;
+          }
+
+          MyUtil.finalArray[dayIndex].messageGroups.push(newMessageGroup);
+          return;
+        } else {
+          console.log("endMessageGroup start");
 
         }
-      },
-      addMessageToExistGroup: function (dayIndex, groupIndex, message) {
-        const _index = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.findIndex((_obj) => new Date(_obj.createdAt) > new Date(message.createdAt));
-        if (MyUtil.finalArray[dayIndex].messageGroup[groupIndex].user._id == message.user._id) {
-          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index, 0, message);
-        } else {
-          const restMessages = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index);
-          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].endAt = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages[MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.length - 1].createdAt;
-          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index + 1, 0, {
-            startAt: message.createdAt,
-            endAt: message.createdAt,
-            messages: [message],
-            user: message.user
-          });
-          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index + 2, 0, {
-            startAt: restMessages[0].createdAt,
-            endAt: message.restMessages[message.restMessages.length - 1].createdAt,
-            messages: restMessages,
-            user: MyUtil.finalArray[dayIndex].messageGroup[groupIndex].user,
-          });
-        }
-      },
+      }
     };
 
     const socket = io("ws://localhost:3000", {
@@ -159,13 +263,43 @@
     socket.on('messages', function (messages) {
       if (messages.length > 1) {
         MyUtil.generateArray(messages);
-        console.log(MyUtil.finalArray);
       } else {
         messages.forEach(message => {
           MyUtil.newMessage(message);
-          console.log(message);
         });
       }
+
+      let html = '';
+
+      MyUtil.finalArray.forEach(data => {
+
+        html += `<span class="align-self-center shadow-lg rounded-3 p-2">${data.date}</span>`;
+        data.messageGroups.forEach((messageGroup, k) => {
+          messageGroup.messages.forEach((message, i) => {
+            html += `
+              <div class="d-flex gap-2">
+                <div class="brd-avatar">
+                  ${i === 0 ? '<i class="fas fa-user-circle fa-2x"></i>' : ''} ${k}-${i}
+                </div>
+
+                <div class="brd-card gap-2 p-2">
+                  ${i === 0 ? `<span>${messageGroup.user.profile.firstname} ${messageGroup.user.profile.lastname}</span>` : ''} 
+          
+                  ${message.type === 'text' ? `<span>${message.payload.text}</span>` : `<img src="${message.payload.fileUrl}" width="50px" height="50px" style="object-fit: cover;">`}
+
+                  <div class="d-flex justify-content-end">
+                    <span class="small fst-italic fw-bold text-black-50">${new Date(message.createdAt).toISOString()}</span>
+                  </div>
+                </div>
+              </div>`;
+          });
+        });
+      });
+
+      console.log(MyUtil.finalArray);
+
+      const container = document.getElementById('container');
+      container.innerHTML = html;
     });
     socket.on('rooms', function (sessionIds) {
       console.log(sessionIds);
