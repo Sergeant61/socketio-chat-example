@@ -22,20 +22,149 @@
   <!--content start-->
 
   <script type="module">
+    const MyUtil = {
+      finalArray: [],
+      addNewDayObject: function (dayObject) {
+        const _index = MyUtil.finalArray.findIndex((_obj) => new Date(_obj.date) > new Date(dayObject.date));
+        MyUtil.finalArray.splice(_index, 0, dayObject);
+      },
+      sortMessagesByDate: function (messages) {
+        return messages.sort(function (a, b) {
+          // Turn your strings into dates, and then subtract them
+          // to get a value that is either negative, positive, or zero.
+          return new Date(a.createdAt) - new Date(b.createdAt);
+        });
+      },
+      createDayGroups: function (messages) {
+        const groups = messages.reduce((groups, message) => {
+          const date = message.createdAt.split('T')[0];
+          if (!groups[date]) {
+            groups[date] = [];
+          }
+          groups[date].push(message);
+          return groups;
+        }, {});
+
+        const groupArrays = Object.keys(groups).map((date) => {
+          return {
+            date,
+            messageGroups: groups[date]
+          };
+        });
+        return groupArrays;
+      },
+      createGroupMessages: function (messages) {
+        const messageGroups = [];
+        messages.forEach(message => {
+          const _message = { ...message };
+          delete _message.user;
+          if (messageGroups[messageGroups.length - 1]?.user._id == message.user._id) {
+            messageGroups[messageGroups.length - 1].messages.push(_message);
+            messageGroups[messageGroups.length - 1].endAt = _message.createdAt;
+          } else {
+            const obj = {
+              user: message.user,
+              createdAt: _message.createdAt,
+              endAt: _message.createdAt,
+              messages: [_message],
+            };
+            messageGroups.push(obj);
+          }
+        });
+        return messageGroups;
+      },
+      generateArray: function (messagesArray) {
+        const sortedMessages = MyUtil.sortMessagesByDate(messagesArray);
+        const groupArrays = MyUtil.createDayGroups(sortedMessages);
+        const _finalArray = groupArrays.map((group) => {
+          group.messageGroups = MyUtil.createGroupMessages(group.messageGroups);
+          return group;
+        });
+        MyUtil.finalArray = _finalArray;
+      },
+      newMessage: function (message) {
+        const messageDay = message.createdAt.split('T')[0];
+        const dayIndex = MyUtil.finalArray.findIndex((day) => day.date === messageDay);
+        if (dayIndex == -1) {
+          const obj = {
+            date: messageDay,
+            messages: [{
+              createdAt: message.createdAt,
+              endAt: message.createdAt,
+              messages: [message],
+              user: message.user,
+            }],
+          };
+          MyUtil.addNewDayObject(obj);
+          console.log("added new day object",messageDay);
+        } else {
+          console.log("day exist --->",messageDay);
+          MyUtil.addMessageToDay(dayIndex, message);
+        }
+        console.log(MyUtil.finalArray);
+      },
+      addMessageToDay: function (dayIndex, message) {
+        let isMessageGroupExist = false,
+        _index = MyUtil.finalArray[dayIndex].messageGroups.findIndex((messageGroup) => {
+          if (new Date(message.createdAt) > new Date(messageGroup.createdAt) && new Date(message.createdAt) < new Date(messageGroup.endAt)) {
+            console.log("message group exist ---->");
+            isMessageGroupExist = true;
+            return true;
+          }
+          if(new Date(message.createdAt) < new Date(messageGroup.createdAt)){
+            return true;
+          }
+        });
+        if(isMessageGroupExist){
+          console.log("addMessageToExistGroup");
+          MyUtil.addMessageToExistGroup(dayIndex, _index, message);
+        }else{
+
+        }
+        
+      },
+      addMessageToExistGroup: function (dayIndex, groupIndex, message) {
+        const _index = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.findIndex((_obj) => new Date(_obj.createdAt) > new Date(message.createdAt));
+        if (MyUtil.finalArray[dayIndex].messageGroup[groupIndex].user._id == message.user._id) {
+          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index, 0, message);
+        } else {
+          const restMessages = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index);
+          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].endAt = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages[MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.length - 1].createdAt;
+          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index + 1, 0, {
+            createdAt:message.createdAt,
+            endAt: message.createdAt,
+            messages: [message],
+            user: message.user
+          });
+          MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index + 2, 0, {
+            createdAt:restMessages[0].createdAt,
+            endAt: message.restMessages[message.restMessages.length-1].createdAt,
+            messages: restMessages,
+            user: MyUtil.finalArray[dayIndex].messageGroup[groupIndex].user,});
+        }
+      },
+    };
+
     const socket = io("ws://localhost:3000", {
       reconnectionDelayMax: 10000,
     });
     socket.emit('join');
 
     socket.on('messages', function (messages) {
-      messages.forEach(message => {
-        console.log(message);
-      });
+      if (messages.length > 1) {
+        MyUtil.generateArray(messages);
+        console.log(MyUtil.finalArray);
+      } else {
+        messages.forEach(message => {
+          MyUtil.newMessage(message);
+          console.log(message);
+        });
+      }
     });
-
     socket.on('rooms', function (sessionIds) {
       console.log(sessionIds);
     });
+
 
   </script>
 

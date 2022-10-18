@@ -65,7 +65,7 @@ const generateMessages = (sessionId, len = 1) => {
 
   for (let i = 0; i < len; i++) {
     const type = types[getRandomInt(0, 1)];
-    const user = users[getRandomInt(0, users.length)];
+    const user = users[getRandomInt(0, users.length-1)];
 
     messages.push({
       "_id": randomId(10),
@@ -79,7 +79,7 @@ const generateMessages = (sessionId, len = 1) => {
       },
       "isWhisper": false,
       "status": "sent",
-      "createdAt": dayjs().add(getRandomInt(-60, 60), 'seconds').toDate()
+      "createdAt": dayjs().add(getRandomInt(-60*60*24, 60*60*24), 'seconds').toDate()
     });
   }
 
