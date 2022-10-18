@@ -64,7 +64,7 @@
           } else {
             const obj = {
               user: message.user,
-              createdAt: _message.createdAt,
+              startAt: _message.createdAt,
               endAt: _message.createdAt,
               messages: [_message],
             };
@@ -89,39 +89,44 @@
           const obj = {
             date: messageDay,
             messages: [{
-              createdAt: message.createdAt,
+              startAt: message.createdAt,
               endAt: message.createdAt,
               messages: [message],
               user: message.user,
             }],
           };
           MyUtil.addNewDayObject(obj);
-          console.log("added new day object",messageDay);
+          console.log("added new day object", messageDay);
         } else {
-          console.log("day exist --->",messageDay);
+          console.log("day exist --->", messageDay);
           MyUtil.addMessageToDay(dayIndex, message);
         }
         console.log(MyUtil.finalArray);
       },
       addMessageToDay: function (dayIndex, message) {
-        let isMessageGroupExist = false,
-        _index = MyUtil.finalArray[dayIndex].messageGroups.findIndex((messageGroup) => {
-          if (new Date(message.createdAt) > new Date(messageGroup.createdAt) && new Date(message.createdAt) < new Date(messageGroup.endAt)) {
-            console.log("message group exist ---->");
+        let isMessageGroupExist = false;
+
+        let _index = MyUtil.finalArray[dayIndex].messageGroups.findIndex((messageGroup) => {
+          if (new Date(message.createdAt) > new Date(messageGroup.startAt) && new Date(message.createdAt) < new Date(messageGroup.endAt)) {
+            console.log("message group exist ----> message", message);
+            console.log("message group exist ----> messageGroup", messageGroup);
             isMessageGroupExist = true;
             return true;
           }
-          if(new Date(message.createdAt) < new Date(messageGroup.createdAt)){
+
+          if (new Date(message.createdAt) < new Date(messageGroup.startAt)) {
+            // console.log("message group exist ----> message", message);
+            // console.log("message group exist ----> messageGroup", messageGroup);
             return true;
           }
         });
-        if(isMessageGroupExist){
+
+        if (isMessageGroupExist) {
           console.log("addMessageToExistGroup");
-          MyUtil.addMessageToExistGroup(dayIndex, _index, message);
-        }else{
+          // MyUtil.addMessageToExistGroup(dayIndex, _index, message);
+        } else {
 
         }
-        
       },
       addMessageToExistGroup: function (dayIndex, groupIndex, message) {
         const _index = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.findIndex((_obj) => new Date(_obj.createdAt) > new Date(message.createdAt));
@@ -131,16 +136,17 @@
           const restMessages = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index);
           MyUtil.finalArray[dayIndex].messageGroup[groupIndex].endAt = MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages[MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.length - 1].createdAt;
           MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index + 1, 0, {
-            createdAt:message.createdAt,
+            startAt: message.createdAt,
             endAt: message.createdAt,
             messages: [message],
             user: message.user
           });
           MyUtil.finalArray[dayIndex].messageGroup[groupIndex].messages.splice(_index + 2, 0, {
-            createdAt:restMessages[0].createdAt,
-            endAt: message.restMessages[message.restMessages.length-1].createdAt,
+            startAt: restMessages[0].createdAt,
+            endAt: message.restMessages[message.restMessages.length - 1].createdAt,
             messages: restMessages,
-            user: MyUtil.finalArray[dayIndex].messageGroup[groupIndex].user,});
+            user: MyUtil.finalArray[dayIndex].messageGroup[groupIndex].user,
+          });
         }
       },
     };
