@@ -164,40 +164,41 @@
         }
       },
       addMessageToDay: function (dayIndex, message) {
-        let isMessageGroupExist = false;
-        let isSameUser = false;
-        let isSameUserNext = false;
+        const _messageGroups = MyUtil.finalArray[dayIndex].messageGroups;
 
-        let groupIndex = MyUtil.finalArray[dayIndex].messageGroups.findIndex((messageGroup, i) => {
-          isSameUser = messageGroup.user._id === message.user._id;
+        for (let groupIndex = 0; groupIndex < _messageGroups.length; groupIndex++) {
 
-          if (new Date(message.createdAt) > new Date(messageGroup.startAt) && new Date(message.createdAt) < new Date(messageGroup.endAt)) {
-            isMessageGroupExist = true;
-            return true;
+          const _messageGroup = MyUtil.finalArray[dayIndex].messageGroups[groupIndex];
+          const isSameUser = _messageGroup.user._id === message.user._id;
+          if (new Date(message.createdAt) < new Date(_messageGroup.startAt)) {
+            if (isSameUser) {
+              MyUtil.addMessageToExistGroup(dayIndex, groupIndex, message, isSameUser);
+            } else {
+              MyUtil.addMessageNewGroup(dayIndex, groupIndex, message);
+            }
+            break;
+          } else if (new Date(message.createdAt) > new Date(_messageGroup.startAt) && new Date(message.createdAt) < new Date(_messageGroup.endAt)) {
+            MyUtil.addMessageToExistGroup(dayIndex, groupIndex, message, isSameUser);
+            break;
+          } else if (groupIndex == _messageGroups.length - 1) {
+            if (isSameUser) {
+              MyUtil.addMessageToExistGroup(dayIndex, groupIndex, message, isSameUser);
+            } else {
+              MyUtil.addMessageNewGroup(dayIndex, groupIndex + 1, message);
+            }
           }
-
-          const _messageGroup = MyUtil.finalArray[dayIndex].messageGroups[i + 1];
-          if (!_messageGroup) {
-            return true;
-          }
-
-          if (new Date(message.createdAt) > new Date(messageGroup.endAt) && new Date(message.createdAt) < new Date(_messageGroup.startAt)) {
-            isSameUserNext = _messageGroup.user._id === message.user._id;
-            return true;
-          }
-        });
-
-        if (isMessageGroupExist) {
-          MyUtil.addMessageToExistGroup(dayIndex, groupIndex, message, isSameUser);
-        } else {
-          MyUtil.addMessageNewGroup(dayIndex, groupIndex, message, isSameUser, isSameUserNext);
+          
         }
+        
       },
       addMessageToExistGroup: function (dayIndex, groupIndex, message, isSameUser) {
         const messagesIndex = MyUtil.finalArray[dayIndex].messageGroups[groupIndex].messages.findIndex((_message) => new Date(_message.createdAt) > new Date(message.createdAt));
-
+        
         if (isSameUser) {
           MyUtil.finalArray[dayIndex].messageGroups[groupIndex].messages.splice(messagesIndex, 0, message);
+          const _messageGroup = MyUtil.finalArray[dayIndex].messageGroups[groupIndex];
+          MyUtil.finalArray[dayIndex].messageGroups[groupIndex].startAt = _messageGroup.messages[0].createdAt;
+          MyUtil.finalArray[dayIndex].messageGroups[groupIndex].endAt = _messageGroup.messages[_messageGroup.messages.length -1].createdAt;
           return;
         }
 
@@ -221,20 +222,7 @@
 
         MyUtil.finalArray[dayIndex].messageGroups.splice(groupIndex + 1, 0, newMessageGroup, restMessageGroup);
       },
-      addMessageNewGroup: function (dayIndex, groupIndex, message, isSameUser, isSameUserNext) {
-
-        if (isSameUser) {
-          MyUtil.finalArray[dayIndex].messageGroups[groupIndex].messages.push(message);
-          MyUtil.finalArray[dayIndex].messageGroups[groupIndex].endAt = message.createdAt;
-          return;
-        }
-
-        if (isSameUserNext) {
-          MyUtil.finalArray[dayIndex].messageGroups[groupIndex + 1].messages.unshift(message);
-          MyUtil.finalArray[dayIndex].messageGroups[groupIndex + 1].startAt = message.createdAt;
-          return;
-        }
-
+      addMessageNewGroup: function (dayIndex, groupIndex, message) {
         const newMessageGroup = {
           startAt: message.createdAt,
           endAt: message.createdAt,
@@ -242,7 +230,7 @@
           user: message.user
         };
 
-        MyUtil.finalArray[dayIndex].messageGroups.splice(groupIndex + 1, 0, newMessageGroup);
+        MyUtil.finalArray[dayIndex].messageGroups.splice(groupIndex, 0, newMessageGroup);
       }
     };
 
@@ -273,7 +261,7 @@
                   ${i === 0 ? '<i class="fas fa-user-circle fa-2x"></i>' : ''} ${k}-${i}
                 </div>
 
-                <div class="brd-card gap-2 p-2">
+                <div class="brd-card gap-2 p-2 " style="margin-left: ${i*25}px;">
                   ${i === 0 ? `<span>${messageGroup.user.profile.firstname} ${messageGroup.user.profile.lastname}</span>` : ''} 
           
                   ${message.type === 'text' ? `<span>${message.payload.text}</span>` : `<img src="${message.payload.fileUrl}" width="50px" height="50px" style="object-fit: cover;">`}
