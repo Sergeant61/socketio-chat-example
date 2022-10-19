@@ -45,8 +45,8 @@ io.on('connection', function (socket) {
 
       io.to(id).emit('messages', generateMessages(id, 5));
 
-      for (let index = 0; index < 1000; index++) {
-        await sleep(getRandomInt(100, 200));
+      for (let index = 0; index < 10000; index++) {
+        await sleep(getRandomInt(150, 300));
         io.to(id).emit('messages', generateMessages(id, 1));
       }
     });
@@ -79,7 +79,7 @@ const generateMessages = (sessionId, len = 1) => {
       },
       "isWhisper": false,
       "status": "sent",
-      "createdAt": dayjs().add(getRandomInt(-60 * 60, 60 * 60), 'seconds').toDate()
+      "createdAt": dayjs().add(getRandomInt(-60 * 60 * 24 * 10, 60 * 60 * 24 * 10), 'seconds').toDate()
     });
   }
 

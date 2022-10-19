@@ -151,7 +151,7 @@
         if (dayIndex == -1) {
           const obj = {
             date: messageDay,
-            messages: [{
+            messageGroups: [{
               startAt: message.createdAt,
               endAt: message.createdAt,
               messages: [message],
@@ -190,7 +190,6 @@
         if (isMessageGroupExist) {
           MyUtil.addMessageToExistGroup(dayIndex, groupIndex, message, isSameUser);
         } else {
-          console.log(groupIndex);
           MyUtil.addMessageNewGroup(dayIndex, groupIndex, message, isSameUser, isSameUserNext);
         }
       },
@@ -294,7 +293,6 @@
       container.innerHTML = html;
     });
     socket.on('rooms', function (sessionIds) {
-      console.log(sessionIds);
     });
 
 
