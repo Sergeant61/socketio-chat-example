@@ -85,7 +85,7 @@
   </div>
 
   <script type="module">
-    const MyUtil = {
+    var MyUtil = {
       finalArray: [],
       addNewDayObject: function (dayObject) {
         const _index = MyUtil.finalArray.findIndex((_obj) => new Date(_obj.date) > new Date(dayObject.date));
@@ -233,6 +233,7 @@
         MyUtil.finalArray[dayIndex].messageGroups.splice(groupIndex, 0, newMessageGroup);
       }
     };
+    window.MyUtil = MyUtil;
 
     const socket = io("ws://localhost:3000", {
       reconnectionDelayMax: 10000,
