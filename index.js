@@ -45,8 +45,8 @@ io.on('connection', function (socket) {
 
       io.to(id).emit('messages', generateMessages(id, 5));
 
-      for (let index = 0; index < 500; index++) {
-        await sleep(getRandomInt(200, 300));
+      for (let index = 0; index < 1000; index++) {
+        await sleep(getRandomInt(100, 200));
         io.to(id).emit('messages', generateMessages(id, 1));
       }
     });
